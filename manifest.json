@@ -1,0 +1,23 @@
+{
+  "manifest_version": 2,
+  "name": "Polycentric_anywhere",
+  "version": "1.2",
+  "description": "add polycentric comments to any website",
+  "icons": {
+    "48": "icons/_48.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*/*"],
+      "js": ["./dist/content-task.js"]
+    }
+  ],
+  "background": {
+    "scripts": ["./dist/background-task.js"]
+  },
+  "permissions": [
+    "https://*/*",
+    "storage",
+    "unlimitedStorage"
+  ]
+}
