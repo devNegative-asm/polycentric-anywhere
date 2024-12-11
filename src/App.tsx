@@ -25,12 +25,6 @@ export function referenceDecode(contentType: bigint, reference: Uint8Array) {
   }[contentType.toString()] ?? decoder.decode.bind(decoder))(reference)
 }
 
-function rmTag<T extends {__tag: any}>(input:T):Omit<T,"__tag"> {
-  const {__tag, ...rest} = input
-  return rest
-}
-
-
 //---------------------------------------------------------------
 //---------------------- CONSTANTS ------------------------------
 //---------------------------------------------------------------
@@ -50,32 +44,34 @@ function App() {
 
   const [transform, setTransform] = React.useState({x:0, y:0})
   const [drag, setDrag] = React.useState<undefined|typeof transform>(undefined)
-
-  const dragger = <div className='button_style unselectable' title="move overlay" draggable="true" style={{background: "#6DABF6", userSelect: "none", width: "50%"}}
-        onDragStart={(e) => {
-          setDrag(ms)
-          return false
-        }}
-        onDragEnd={(e) => {
-          setDrag(undefined)
-          e.preventDefault();
-          return false
-        }}
-        onDrag={(e) => {
-          e.preventDefault();
-          const delta = {
-              x: drag ? ms.x - drag.x : 0,
-              y: drag ? ms.y - drag.y : 0,
-          }
-          setTransform({
-              x: transform.x + delta.x,
-              y: transform.y + delta.y
-          })
-          setDrag(ms)
-          return false
-      }}>
-        &nbsp;
-          </div>
+  const dragger = 
+    <div className='button_style unselectable' style={{background: "#6DABF6", userSelect: "none", width: "50%"}} title="move overlay" onDragOver={(e) => {e.preventDefault()}}>
+      <div draggable style={{display: "flex", height: "100%", width: "100%"}}
+          onDragStart={(e) => {
+            setDrag(ms)
+            return false
+          }}
+          onDragEnd={(e) => {
+            setDrag(undefined)
+            e.preventDefault();
+            return false
+          }}
+          onDrag={(e) => {
+            e.preventDefault();
+            const delta = {
+                x: drag ? ms.x - drag.x : 0,
+                y: drag ? ms.y - drag.y : 0,
+            }
+            setTransform({
+                x: transform.x + delta.x,
+                y: transform.y + delta.y
+            })
+            setDrag(ms)
+            return false
+        }}>
+          &nbsp;
+      </div>
+    </div>
   return (
 
     
@@ -111,7 +107,7 @@ function App() {
           .Polycentric_App div {
             color: white;
           }
-          .Polycentric_App input {
+          .Polycentric_App *.input {
             font-size: 22px;
             border: 2px solid #111;
             border-color: black;
@@ -131,7 +127,9 @@ function App() {
             background: lime;
             border-radius: 18px;
             padding: 0px 4px;
-            margin: 0px;
+            margin: 0px 4px;
+            user-select: none;
+            cursor: pointer;
           }
           .Polycentric_App button.no_background {
             font-size: 22px;
@@ -141,7 +139,7 @@ function App() {
             background: #0f0f4d;
             border-radius: 18px;
             padding: 0px 4px;
-            margin: 0px;
+            margin: 0px 4px;
           }
           .Polycentric_App img.avatar {
             height: 50px;

@@ -1,6 +1,6 @@
 import * as React from "react"
 import {AsyncComponent, UTF8Encoder, PolycentricUtils, Post, PostInputBox, AsyncComponentSingleton, fixUrlToReference} from "./barrel"
-import { extensionInvoke, OperationRequest } from "./background/core"
+import { extensionInvoke, OperationRequest } from "./background/Core"
 import App from "./App"
 import { bufferToReference, ContentType, EventType } from "./protobufs"
 interface PolycentricAnywhereProps {

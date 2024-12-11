@@ -1,7 +1,7 @@
 import * as React from "react"
-import { base64FromBytes, bytesToHexString, UTF8Decoder } from "./core/Util"
-import { ContentType, EventType, decodePost, decodeSystemProcesses } from "./protobufs"
-import { AsyncComponentSingleton, PolycentricUtils } from "./barrel"
+import { base64FromBytes, bytesToHexString, UTF8Decoder } from "../core/Util"
+import { ContentType, EventType, decodePost, decodeSystemProcesses } from "../protobufs"
+import { AsyncComponentSingleton, PolycentricUtils } from "../barrel"
 
 export interface PostProps {
     event: EventType

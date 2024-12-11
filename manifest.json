@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Polycentric_anywhere",
-  "version": "1.2",
+  "version": "1.3",
   "description": "add polycentric comments to any website",
   "icons": {
     "48": "icons/_48.png"

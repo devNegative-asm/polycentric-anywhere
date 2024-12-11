@@ -1,4 +1,4 @@
-import type { Encoded } from "../background/core"
+import type { Encoded } from "../background/Core"
 import { base64FromBytes, bytesFromBase64 } from "../core/Util"
 
 const bytes = [] as const
@@ -296,6 +296,19 @@ export function bufferToReference(buffer: Uint8Array): ReferenceType {
         referenceType: 3n,
         reference: buffer,
     };
+}
+
+//recommend against using this since unsigned event hashes are noncononical
+export async function eventToPointer(event:EventType): Promise<PointerType> {
+    return {
+        system: event.system,
+        process: event.process,
+        logicalClock: event.logicalClock,
+        eventDigest: {
+            digestType: 1n,
+            digest: await hash(encodeEvent(event))
+        }
+    }
 }
 
 export async function signedEventToPointer(signedEvent:SignedEventType): Promise<PointerType> {

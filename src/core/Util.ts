@@ -1,4 +1,4 @@
-import { Encoded, extensionInvoke, OperationRequest } from "../background/core";
+import { Encoded, extensionInvoke, OperationRequest } from "../background/Core";
 import { deserializeBufferObject, serializeBufferObject } from "../protobufs";
 
 export const UTF8Decoder = new TextDecoder()

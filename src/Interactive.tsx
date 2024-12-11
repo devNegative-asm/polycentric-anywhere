@@ -1,7 +1,7 @@
 import * as React from "react"
 import { PolycentricUtils } from "./core/PolycentricUtils"
-import { Encoded, extensionInvoke, OperationRequest } from "./background/core"
-import { AsyncComponent } from "./AsyncComponent"
+import { Encoded, extensionInvoke, OperationRequest } from "./background/Core"
+import { AsyncComponent } from "./components/AsyncComponent"
 import { deserializeBufferObject, EventType, PrivateKeyType, ProcessType, PublicKeyType, ReferenceType, serializeBufferObject, SystemType } from "./protobufs"
 import { bytesToHexString, timeLimit, UTF8Decoder, UTF8Encoder } from "./barrel"
 
@@ -18,6 +18,7 @@ export function PostInputBox<T extends PostInputBoxProps>(props: T & React.Detai
     const [privateKey, setPrivateKey] = React.useState<PrivateKeyType|undefined>()
     const [signedInPromise, setSignedInPromise] = React.useState(() => extensionInvoke({operation: OperationRequest.GET_STATE, payload: {}}).then(e => e.result))
     const [processOptions, setProcessOptions] = React.useState<ProcessType[]|undefined>(undefined)
+    const [textContent, setTextContent] = React.useState<string>("")
     const usernamePromise = React.useMemo(async () => {
         const user = await signedInPromise
         if(user.outcome === "success") {
@@ -29,7 +30,7 @@ export function PostInputBox<T extends PostInputBoxProps>(props: T & React.Detai
     return (
     <AsyncComponent promise={signedInPromise} fallback={() => <div>Logging in...</div>}>
         {(signedIn) => {
-            const inputBox = <input type="text" key="polycentric-anywhere-input" id="polycentric-anywhere-input" value={content} onChange={(e) => {
+            const inputBox = <input className="input" type="text" key="polycentric-anywhere-input" id="polycentric-anywhere-input" value={content} onChange={(e) => {
                 setContent(e.target.value)
             }}/>
 
@@ -40,16 +41,17 @@ export function PostInputBox<T extends PostInputBoxProps>(props: T & React.Detai
                             {(username) => <>[{username}]:</>}
                         </AsyncComponent>
                     </label>
-                    {inputBox}
+                    <textarea className="input" value={textContent} onChange={(e) => setTextContent(e.target.value)} style={{whiteSpace: "pre", width: "100%", height: "100px"}}/>
                     <button type="button" onClick={async () => {
                         extensionInvoke({operation: OperationRequest.POST, payload: {
-                            content,
+                            content: textContent,
                             references: props.references?.map(serializeBufferObject)
                         }}).then(({result}) => {
                             if(result.outcome === "error") {
                                 onPostError("error: " + result.error)
                             } else {
                                 onPostFinished(deserializeBufferObject(result.event))
+                                setTextContent("")
                             }
                         })
                     }}>{"Post"}</button>
@@ -163,7 +165,7 @@ export function PostInputBox<T extends PostInputBoxProps>(props: T & React.Detai
                 case 4:
                     //allow naming the process (up to 16 characters)
                     if(!(/^[ -~]{0,16}$/g.test(content))) {
-                        setContent(content.replaceAll(/[^ -~]/, "").substring(0,16))
+                        setContent(content.replaceAll(/[^ -~]/g, "").substring(0,16))
                     }
 
                     return <div {...otherProps}>
@@ -182,7 +184,8 @@ export function PostInputBox<T extends PostInputBoxProps>(props: T & React.Detai
                                     key: serializeBufferObject(privateKey!),
                                     process: serializeBufferObject({process}),
                                 }
-                            }).then((resp) => resp.result))
+                            }).then((resp) => resp.result)
+                              .finally(() => setContent("")))
                         }}>
                             Confirm
                         </button>

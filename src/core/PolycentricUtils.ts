@@ -1,4 +1,4 @@
-import * as API from "./api"
+import * as API from "./Api"
 import { bytesToHexString, cache, extensionCache, flattenUint8Arrays, UTF8Decoder, UTF8Encoder } from "./Util";
 import {
     ContentType,
@@ -36,7 +36,7 @@ import {
     VectorClockType
 } from "../protobufs";
 import {signAsync, getPublicKeyAsync, verifyAsync} from "@noble/ed25519"
-import { extensionInvoke, OperationRequest } from "../background/core";
+import { extensionInvoke, OperationRequest } from "../background/Core";
 
 function sortByDescendingTime(events: EventType[]): void {
     events.sort((event1, event2) => {
@@ -605,21 +605,31 @@ export class PolycentricUtils {
         return this.queryEventsReferencing(ref, contentType, limitCalls, entriesPerPage)
     }
 
+    private async getAllAndUnwrap(generator: (server: string) => Promise<SignedEventType[]>, system?: SystemType) {
+        const servers = await this.getServers()
+        const events = await onlyFulfilled(servers.map(async (server) => ({
+            response: await generator(server),
+            server: server
+        })))
+        const signedEvents = events.flatMap(events => (events.response ?? []).map(event => ({
+            event: event,
+            server: events.server
+        })))
+        const unwrappedEvents = system
+            ? await Promise.all(signedEvents.map((event) => this.unwrapSignedEvent(system, event.event, event.server)))
+            : await Promise.all(signedEvents.map((event) => this.unwrapSignedEventUnknownSystem(event.event, event.server)))
+        const verifiedEvents = unwrappedEvents.filter((event): event is EventType => event !== undefined)
+        sortByDescendingTime(verifiedEvents)
+        return verifiedEvents
+    }
+
     public readonly systemToAvatar = extensionCache({
         func: async (payload:{system: SystemType, resolution?: [bigint, bigint]}) => {
             const servers = await this.getServers()
             const {system, resolution} = payload
-            const events = await onlyFulfilled(servers.map(async (server) => ({
-                response: await API.getQueryLatest(server, system, [ContentType.Avatar]),
-                server: server
-            })))
-            const signedEvents = events.flatMap(events => (events.response.events ?? []).map(event => ({
-                event: event,
-                server: events.server
-            })))
-            const unwrappedEvents = await Promise.all(signedEvents.map((event) => this.unwrapSignedEvent(system, event.event, event.server))) 
-            const verifiedEvents = unwrappedEvents.filter((event): event is EventType => event !== undefined)
-            sortByDescendingTime(verifiedEvents)
+
+            const verifiedEvents = await this.getAllAndUnwrap(async (server) => (await API.getQueryLatest(server, system, [ContentType.Avatar])).events ?? [], system)
+
             const element = verifiedEvents[0]?.lwwElement?.value
             if(!element) {
                 return []
@@ -638,16 +648,8 @@ export class PolycentricUtils {
                 rangesForProcesses: decodedManifests.map(({process, sections}) => ({process, ranges: sections}))
             }
 
-            const blobEvents = await onlyFulfilled(servers.map(async (server) => ({
-                response: await API.getEvents(server, system, rangesMap),
-                server: server
-            })))
-            const signedBlobEvents = blobEvents.flatMap(events => (events.response.events ?? []).map(event => ({
-                event: event,
-                server: events.server
-            })))
-            const unwrappedBlobEvents = await Promise.all(signedBlobEvents.map((event) => this.unwrapSignedEvent(system, event.event, event.server))) 
-            const verifiedBlobEvents = unwrappedBlobEvents.filter((event): event is EventType => event !== undefined)
+            const verifiedBlobEvents = await this.getAllAndUnwrap(async (server) => (await API.getEvents(server, system, rangesMap)).events ?? [], system)
+
             function range(low:bigint, high:bigint): bigint[] {
                 const retv = [] as bigint[]
                 while(low <= high) {
